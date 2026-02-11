@@ -1,1 +1,1 @@
-# EDA_Autom-tica---CNSESI
+# EDA_Automática---CNSESI
