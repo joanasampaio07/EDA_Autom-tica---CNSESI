@@ -30,11 +30,33 @@ if uploaded_file is not None:
         file_extension = uploaded_file.name.split('.')[-1].lower()
 
         if file_extension == 'csv':
-            df = pd.read_csv(uploaded_file)
+            # Tentar diferentes encodings
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            df = None
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(uploaded_file, encoding=encoding)
+                    break
+                except (UnicodeDecodeError, LookupError):
+                    uploaded_file.seek(0)  # Reset file pointer
+                    continue
+            if df is None:
+                st.error("Não foi possível ler o arquivo CSV. Tente converter para UTF-8.")
         elif file_extension in ['xlsx', 'xls']:
             df = pd.read_excel(uploaded_file)
         elif file_extension == 'txt':
-            df = pd.read_csv(uploaded_file, sep='\t')
+            # Tentar diferentes encodings para TXT também
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            df = None
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(uploaded_file, sep='\t', encoding=encoding)
+                    break
+                except (UnicodeDecodeError, LookupError):
+                    uploaded_file.seek(0)  # Reset file pointer
+                    continue
+            if df is None:
+                st.error("Não foi possível ler o arquivo TXT. Tente converter para UTF-8.")
         else:
             # Para outros tipos de arquivo, mostrar informações básicas
             st.info(f"Arquivo {uploaded_file.name} carregado. Tipo: {file_extension}")
