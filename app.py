@@ -60,24 +60,46 @@ uploaded_file = st.file_uploader(
 
 def read_file_with_encoding(uploaded_file, file_extension):
     """Tenta ler arquivo com diferentes encodings"""
-    encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
-    
-    for encoding in encodings:
-        try:
-            if file_extension == 'csv':
-                df = pd.read_csv(uploaded_file, encoding=encoding)
-            elif file_extension in ['xlsx', 'xls']:
-                df = pd.read_excel(uploaded_file)
-                break
-            elif file_extension == 'txt':
-                df = pd.read_csv(uploaded_file, sep='\t', encoding=encoding)
-            else:
-                return None
+    try:
+        if file_extension in ['xlsx', 'xls']:
+            try:
+                import openpyxl
+            except ImportError:
+                st.error("❌ Biblioteca openpyxl não disponível. Instalando...")
+                import subprocess
+                subprocess.check_call(['pip', 'install', 'openpyxl'])
+                import openpyxl
+            
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
             return df
-        except (UnicodeDecodeError, LookupError):
-            uploaded_file.seek(0)
-            continue
-    return None
+            
+        elif file_extension == 'csv':
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(uploaded_file, encoding=encoding)
+                    return df
+                except (UnicodeDecodeError, LookupError):
+                    uploaded_file.seek(0)
+                    continue
+            return None
+            
+        elif file_extension == 'txt':
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(uploaded_file, sep='\t', encoding=encoding)
+                    return df
+                except (UnicodeDecodeError, LookupError):
+                    uploaded_file.seek(0)
+                    continue
+            return None
+        else:
+            return None
+            
+    except Exception as e:
+        st.error(f"❌ Erro ao ler arquivo: {str(e)}")
+        return None
 
 if uploaded_file is not None:
     try:
